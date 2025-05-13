@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Add this to global or module CSS if needed */
+* {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+
+@layer base {
+  :root {
+    --background: 222 47% 11%;
+    --foreground: 0 0% 100%;
+
+    --card: 222 47% 11%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 222 47% 11%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 47 65% 51%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 222 33% 25%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+
+    --accent: 222 33% 25%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 33% 25%;
+    --input: 222 33% 25%;
+    --ring: 47 65% 51%;
+
+    --radius: 0.5rem;
+    
+    --navy-default: #0A1930;
+    --navy-light: #192841;
+    --navy-dark: #061628;
+    
+    --royal-default: #1C3766;
+    --royal-light: #2A4980;
+    --royal-dark: #102548;
+    
+    --gold-default: #D4AF37;
+    --gold-light: #E9C868;
+    --gold-dark: #BF9B2F;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-[--navy-default] text-foreground font-inter;
+  }
+}
+
+/* Custom styles */
+@layer components {
+  .shield-btn {
+    clip-path: polygon(10% 0, 90% 0, 100% 20%, 100% 80%, 90% 100%, 10% 100%, 0 80%, 0 20%);
+  }
+  
+  .gold-border {
+    box-shadow: 0 0 0 1px var(--gold-default), 0 0 0 3px rgba(212, 175, 55, 0.3);
+  }
+  
+  .model-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .model-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(212, 175, 55, 0.4);
+  }
+  
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(212, 175, 55, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(212, 175, 55, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  
+  .shield-container {
+    position: relative;
+  }
+  
+  .shield-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(212, 175, 55, 0.15), transparent);
+    clip-path: polygon(5% 0, 95% 0, 100% 20%, 100% 80%, 95% 100%, 5% 100%, 0 80%, 0 20%);
+    z-index: -1;
+  }
+  
+  .scene-controls button {
+    transition: all 0.2s;
+  }
+  
+  .scene-controls button:hover {
+    background-color: var(--gold-default);
+    color: var(--navy-default);
+  }
+}
+
+/* Custom font classes */
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-cinzel-decorative {
+  font-family: 'Cinzel Decorative', serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--navy-default);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--gold-default);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-light);
+}
+
+/* In @layer components or global */
+.scroll-hidden {
+  scrollbar-width: none; /* Firefox */
+}
+.scroll-hidden::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.scroll-visible {
+  scrollbar-width: thin;
+}
+.scroll-visible::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-visible::-webkit-scrollbar-thumb {
+  background: var(--gold-default);
+  border-radius: 4px;
+}
+.scroll-visible::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-light);
+}
