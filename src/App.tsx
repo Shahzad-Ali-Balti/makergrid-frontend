@@ -24,7 +24,8 @@ import BillingPage from "@/pages/BillingPage"
 import ProfilePageSelf from "./pages/ProfilePageSelf";
 import BillingSuccessPage from "./pages/billing-succes-page";
 function Router() {
-  return (
+  return ( 
+    
     <Switch>
       {/* Public Routes */}
       <Route path="/" component={HomePage} />

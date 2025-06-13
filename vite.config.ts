@@ -15,4 +15,8 @@ export default defineConfig({
     outDir: "dist",
     emptyOutDir: true,
   },
+  define: {
+    // Injecting VITE_API_BASE_URL into the code
+    'process.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || 'http://makergrids.eba-muuyvbmf.eu-north-1.elasticbeanstalk.com')
+  },
 });
