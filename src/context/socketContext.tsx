@@ -36,8 +36,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    const socket_url = import.meta.env.VITE_SOCKET_URL
 
-    const ws = new WebSocket(`ws://localhost:8000/ws/chat/user_${user.id}/?token=${accessToken}`);
+    const ws = new WebSocket(`ws://${socket_url}/ws/chat/user_${user.id}/?token=${accessToken}`);
     socketRef.current = ws;
 
     ws.onopen = () => {

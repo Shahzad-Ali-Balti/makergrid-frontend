@@ -126,7 +126,7 @@ const DashboardPage: React.FC = () => {
                                         >
                                             <div className="bg-[--navy-default] p-4 rounded-md border border-[--gold-default] hover:shadow-lg transition-all min-w-[200px] h-full flex flex-col justify-between">
                                                 <ModelViewerMini
-                                                    modelUrl={`${BACKEND_PUBLIC_URL}${gen.model_file || ""}`}
+                                                    modelUrl={`${gen.model_file}`}
                                                     className="w-full h-40"
                                                     isPage={true}
                                                 />

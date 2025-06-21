@@ -67,7 +67,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
         optimizePrinting
       );
   
-      setGeneratedModelUrl(`${BACKEND_PUBLIC_URL}${data.stored_path}`);
+      setGeneratedModelUrl(`${data.stored_path}`);
       setIsGenerating(false);
   
       toast({
