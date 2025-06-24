@@ -11,6 +11,8 @@ import { Generation } from '@/types/GenerationType';
 import { BACKEND_PUBLIC_URL } from '@/lib/mock/env';
 import { getMockGen } from '@/lib/mock/MockGen';
 import { fetchAssets } from "@/utils/apiCalls/fetchassets"
+import axiosInstance from '@/lib/axiosInstance'; // your axios instance
+
 // import promptImagePlaceholder from "../public/assets/placeholder 1.png"
 import { Input } from "@/components/ui/input"
 import { AspectRatio } from "@/components/ui/aspect-ratio"
@@ -48,46 +50,130 @@ const ImageToModelPage: React.FC = () => {
     staleTime: 60000,
   });
 
-  const handleGenerate = async () => {
-    if (!selectedFile) {
+  // const handleGenerate = async () => {
+  //   if (!selectedFile) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Please select an Image file",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
+
+  //   setIsGenerating(true);
+  //   setGeneratedModelUrl(null)
+
+  //   try {
+  //     // Pass all parameters (future-ready)
+      // const data = await generateImageToModel(
+  //       selectedFile
+  //     );
+
+  //     setGeneratedModelUrl(`${data.stored_path}`);
+  //     setIsGenerating(false);
+
+  //     toast({
+  //       title: "Model Generated",
+  //       description: "Your 3D model has been successfully created!",
+  //       variant: "default",
+  //     });
+
+  //     console.log("Generated Model Details:", data);
+
+  //   } catch (error) {
+  //     console.error('Error generating model:', error);
+  //     setIsGenerating(false);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to generate model. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+
+const handleGenerate = async () => {
+  if (!selectedFile) {
+    toast({
+      title: "Error",
+      description: "Please select an image file.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setIsGenerating(true);
+  setGeneratedModelUrl(null);
+
+  const formData = new FormData();
+  formData.append("image", selectedFile);
+
+  try {
+    // ✅ Step 1: Start background job
+    const res = await axiosInstance.post("/api/makers/image-to-model/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    const { task_id } = res.data;
+
+    // ✅ Step 2: Poll for task status
+    const pollStatus = async () => {
+      let attempts = 0;
+      const maxAttempts = 60; // e.g., 5 mins (60 × 5s)
+
+      while (attempts < maxAttempts) {
+        const statusRes = await axiosInstance.get(`/api/model-job-status/${task_id}/`);
+        const statusData = statusRes.data;
+
+        if (statusData.status === "SUCCESS") {
+          const result = statusData.result;
+          setGeneratedModelUrl(result.stored_path);
+          setIsGenerating(false);
+          toast({
+            title: "Model Generated",
+            description: "Your 3D model has been successfully created!",
+            variant: "default",
+          });
+          return;
+        }
+
+        if (statusData.status === "FAILURE") {
+          toast({
+            title: "Error",
+            description: statusData.result?.error || "Failed to generate model.",
+            variant: "destructive",
+          });
+
+          setIsGenerating(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+        attempts++;
+      }
+
       toast({
-        title: "Error",
-        description: "Please select an Image file",
+        title: "Timeout",
+        description: "Model generation took too long. Please try again.",
         variant: "destructive",
       });
-      return;
-    }
-
-    setIsGenerating(true);
-    setGeneratedModelUrl(null)
-
-    try {
-      // Pass all parameters (future-ready)
-      const data = await generateImageToModel(
-        selectedFile
-      );
-
-      setGeneratedModelUrl(`${data.stored_path}`);
       setIsGenerating(false);
+    };
 
-      toast({
-        title: "Model Generated",
-        description: "Your 3D model has been successfully created!",
-        variant: "default",
-      });
+    pollStatus();
+  } catch (error) {
+    console.error("Error generating model:", error);
+    toast({
+      title: "Error",
+      description: "Failed to generate model. Please try again.",
+      variant: "destructive",
+    });
+    setIsGenerating(false);
+  }
+};
 
-      console.log("Generated Model Details:", data);
-
-    } catch (error) {
-      console.error('Error generating model:', error);
-      setIsGenerating(false);
-      toast({
-        title: "Error",
-        description: "Failed to generate model. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;

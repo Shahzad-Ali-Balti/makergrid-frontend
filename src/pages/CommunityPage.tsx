@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import ModelCard from "@/components/ModelCard";
 import { getMockModels } from "@/lib/mock/mockData"
 import { useQuery } from '@tanstack/react-query';
-import {Model} from "@/types/modelTypes"
+import { Model } from "@/types/modelTypes"
 
 
 
