@@ -67,7 +67,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
         optimizePrinting
       );
   
-      setGeneratedModelUrl(`${data.stored_path}`);
+      setGeneratedModelUrl(`https://awaismaz.pythonanywhere.com${data.stored_path}`);
       setIsGenerating(false);
   
       toast({
