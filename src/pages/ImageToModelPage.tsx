@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import ShieldButton from '@/components/ShieldButton';
 import ThreeJsViewer from '@/components/ThreeJsViewer';
-import { generateImageToModel } from '@/lib/makerAPI';
+import { generateImageToModel, checkImageTaskStatus } from '@/lib/makerAPI';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import ModelViewer from '@/components/model-viewer';
+import { generateModel, checkTaskStatus } from '@/lib/makerAPI';
+
 import { fetcher } from "@/lib/fetcher"
 import { Generation } from '@/types/GenerationType';
 import { BACKEND_PUBLIC_URL } from '@/lib/mock/env';
@@ -26,6 +28,8 @@ const ImageToModelPage: React.FC = () => {
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const baseURL = BACKEND_PUBLIC_URL || 'http://localhost:8000'; // Fallback to local URL if not set
+
   // Fetch previous generations for the user
   // const { data: userGenerations=[], isLoading: loadingGenerations } = useQuery<Generation[]>({
   //   queryKey: ['/api/users/1/generations'], // Default user ID for demo
@@ -52,36 +56,97 @@ const ImageToModelPage: React.FC = () => {
 
   const handleGenerate = async () => {
     if (!selectedFile) {
-      toast({
-        title: "Error",
-        description: "Please select an Image file",
-        variant: "destructive",
-      });
+      alert("Please select an image file.");
       return;
     }
 
     setIsGenerating(true);
-    setGeneratedModelUrl(null)
+    setGeneratedModelUrl(null);
 
     try {
-      // Pass all parameters (future-ready)
-      const data = await generateImageToModel(
-        selectedFile
-      );
 
-      setGeneratedModelUrl(`${data.stored_path}`);
-      setIsGenerating(false);
 
-      toast({
-        title: "Model Generated",
-        description: "Your 3D model has been successfully created!",
-        variant: "default",
-      });
+      // Trigger the model generation and get the task ID
+      const data = await generateImageToModel(selectedFile);
+      const taskId = data.task_id;  // Get task ID from response
 
-      console.log("Generated Model Details:", data);
+      // Polling loop for task status
+      const pollTaskStatus = async () => {
+        try {
+          // Poll the task status using the task ID
+          const statusData = await checkImageTaskStatus(taskId);
+
+          // Check the status of the task
+          const status = statusData.status;
+
+          if (status === 'completed') {
+            // Task succeeded, show the model output and stop polling
+            // Extract model path and create the full URL
+            const modelPath = statusData.stored_path; // This is the model path from the response
+            const modelFileUrl = `${baseURL}/media/${modelPath}`; // Assuming `baseURL` is the base URL for your server
+
+            // Extracting additional fields like preview image URL, color video, gaussian ply, if available
+            const previewImageUrl = statusData.preview_image_url;
+            const colorVideo = statusData.color_video;
+            const gaussianPly = statusData.gaussian_ply;
+
+            // Update the generated model URL with the model path
+            setGeneratedModelUrl(modelFileUrl);
+
+            // Log or store other URLs (preview image, color video, gaussian ply) if needed
+            console.log("Preview Image URL:", previewImageUrl);
+            console.log("Color Video URL:", colorVideo);
+            console.log("Gaussian PLY URL:", gaussianPly);
+
+            // Show a success toast message
+            toast({
+              title: "Success",
+              description: "Model generation completed successfully!",
+              // variant: "success",  // Use variant: "success" for success styling
+            });
+
+            // Stop the generating state
+            setIsGenerating(false);
+          } else if (status === 'failed') {
+            // Task failed, show an error and stop polling
+            toast({
+              title: "Error",
+              description: "Model generation failed. Please try again.",
+              variant: "destructive",
+            });
+
+            // Stop the generating state
+            setIsGenerating(false);
+          } else if (status === 'starting' || status === 'processing') {
+            // Task is still processing, continue polling
+            setTimeout(pollTaskStatus, 10000); // Wait for 10 seconds before polling again
+          } else {
+            // Unexpected status
+            toast({
+              title: "Error",
+              description: "Unexpected task status. Please try again.",
+              variant: "destructive",
+            });
+            setIsGenerating(false);
+          }
+        } catch (error) {
+          console.error("Error checking task status:", error);
+          setIsGenerating(false);
+          toast({
+            title: "Error",
+            description: "Failed to check task status. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+
+
+
+      // Start polling the task status
+      pollTaskStatus();
 
     } catch (error) {
-      console.error('Error generating model:', error);
+      console.error("Error generating model:", error);
       setIsGenerating(false);
       toast({
         title: "Error",
@@ -92,88 +157,88 @@ const ImageToModelPage: React.FC = () => {
   };
 
 
-// const handleGenerate = async () => {
-//   if (!selectedFile) {
-//     toast({
-//       title: "Error",
-//       description: "Please select an image file.",
-//       variant: "destructive",
-//     });
-//     return;
-//   }
+  // const handleGenerate = async () => {
+  //   if (!selectedFile) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Please select an image file.",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-//   setIsGenerating(true);
-//   setGeneratedModelUrl(null);
+  //   setIsGenerating(true);
+  //   setGeneratedModelUrl(null);
 
-//   const formData = new FormData();
-//   formData.append("image", selectedFile);
+  //   const formData = new FormData();
+  //   formData.append("image", selectedFile);
 
-//   try {
-//     // ✅ Step 1: Start background job
-//     const res = await axiosInstance.post("/api/makers/image-to-model/", formData, {
-//       headers: {
-//         "Content-Type": "multipart/form-data",
-//       },
-//     });
+  //   try {
+  //     // ✅ Step 1: Start background job
+  //     const res = await axiosInstance.post("/api/makers/image-to-model/", formData, {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     });
 
-//     const { task_id } = res.data;
-//     console.log("Task ID:", task_id);
+  //     const { task_id } = res.data;
+  //     console.log("Task ID:", task_id);
 
-//     // ✅ Step 2: Poll for task status
-//     const pollStatus = async () => {
-//       let attempts = 0;
-//       const maxAttempts = 60; // e.g., 5 mins (60 × 5s)
+  //     // ✅ Step 2: Poll for task status
+  //     const pollStatus = async () => {
+  //       let attempts = 0;
+  //       const maxAttempts = 60; // e.g., 5 mins (60 × 5s)
 
-//       while (attempts < maxAttempts) {
-//         const statusRes = await axiosInstance.get(`/api/model-job-status/${task_id}/`);
-//         const statusData = statusRes.data;
+  //       while (attempts < maxAttempts) {
+  //         const statusRes = await axiosInstance.get(`/api/model-job-status/${task_id}/`);
+  //         const statusData = statusRes.data;
 
-//         if (statusData.status === "SUCCESS") {
-//           const result = statusData.result;
-//           setGeneratedModelUrl(result.stored_path);
-//           setIsGenerating(false);
-//           toast({
-//             title: "Model Generated",
-//             description: "Your 3D model has been successfully created!",
-//             variant: "default",
-//           });
-//           return;
-//         }
+  //         if (statusData.status === "SUCCESS") {
+  //           const result = statusData.result;
+  //           setGeneratedModelUrl(result.stored_path);
+  //           setIsGenerating(false);
+  //           toast({
+  //             title: "Model Generated",
+  //             description: "Your 3D model has been successfully created!",
+  //             variant: "default",
+  //           });
+  //           return;
+  //         }
 
-//         if (statusData.status === "FAILURE") {
-//           toast({
-//             title: "Error",
-//             description: statusData.result?.error || "Failed to generate model.",
-//             variant: "destructive",
-//           });
+  //         if (statusData.status === "FAILURE") {
+  //           toast({
+  //             title: "Error",
+  //             description: statusData.result?.error || "Failed to generate model.",
+  //             variant: "destructive",
+  //           });
 
-//           setIsGenerating(false);
-//           return;
-//         }
+  //           setIsGenerating(false);
+  //           return;
+  //         }
 
-//         await new Promise((resolve) => setTimeout(resolve, 5000));
-//         attempts++;
-//       }
+  //         await new Promise((resolve) => setTimeout(resolve, 5000));
+  //         attempts++;
+  //       }
 
-//       toast({
-//         title: "Timeout",
-//         description: "Model generation took too long. Please try again.",
-//         variant: "destructive",
-//       });
-//       setIsGenerating(false);
-//     };
+  //       toast({
+  //         title: "Timeout",
+  //         description: "Model generation took too long. Please try again.",
+  //         variant: "destructive",
+  //       });
+  //       setIsGenerating(false);
+  //     };
 
-//     pollStatus();
-//   } catch (error) {
-//     console.error("Error generating model:", error);
-//     toast({
-//       title: "Error",
-//       description: "Failed to generate model. Please try again.",
-//       variant: "destructive",
-//     });
-//     setIsGenerating(false);
-//   }
-// };
+  //     pollStatus();
+  //   } catch (error) {
+  //     console.error("Error generating model:", error);
+  //     toast({
+  //       title: "Error",
+  //       description: "Failed to generate model. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //     setIsGenerating(false);
+  //   }
+  // };
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

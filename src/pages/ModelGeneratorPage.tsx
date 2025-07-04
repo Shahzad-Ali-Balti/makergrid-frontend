@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import ShieldButton from '@/components/ShieldButton';
 import ThreeJsViewer from '@/components/ThreeJsViewer';
-import { generateModel } from '@/lib/makerAPI';
+import { generateModel, checkTaskStatus } from '@/lib/makerAPI';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import ModelViewer from '@/components/model-viewer';
-import {fetcher} from "@/lib/fetcher"
+import { fetcher } from "@/lib/fetcher"
 import { Generation } from '@/types/GenerationType';
 import { BACKEND_PUBLIC_URL } from '@/lib/mock/env';
 import { getMockGen } from '@/lib/mock/MockGen';
-import  {fetchAssets} from "@/utils/apiCalls/fetchassets"
+import { fetchAssets } from "@/utils/apiCalls/fetchassets"
 
 
 
@@ -22,20 +22,23 @@ const ModelGeneratorPage: React.FC = () => {
   const [optimizePrinting, setOptimizePrinting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
+  const baseURL = BACKEND_PUBLIC_URL || 'http://localhost:8000'; // Fallback to local URL if not set
 
 
-const page = 1; // First page
-const pageSize = 10; // Default page size
+  const page = 1; // First page
+  const pageSize = 10; // Default page size
 
 
-const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQuery({
-    queryKey: ['assets', page, pageSize,generatedModelUrl],
+  const { data: userGenerations = [], isLoading: loadingGenerations, isError } = useQuery({
+    queryKey: ['assets', page, pageSize, generatedModelUrl],
     queryFn: () => fetchAssets(page, pageSize),
     staleTime: 60000,
   });
 
 
-  
+
+
+  // Generate the model, triggers the Celery task
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       toast({
@@ -46,40 +49,101 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
       return;
     }
 
-    if(prompt.length > 1000){
+    if (prompt.length > 1000) {
       toast({
         title: "Error",
         description: "Prompt must be less than 1000 characters.",
         variant: "destructive",
       });
-      return
+      return;
     }
-  
+
     setIsGenerating(true);
-    setGeneratedModelUrl(null)
-  
+    setGeneratedModelUrl(null);
+
     try {
-      // Pass all parameters (future-ready)
-      const data = await generateModel(
-        prompt,
-        style,
-        complexity,
-        optimizePrinting
-      );
-  
-      setGeneratedModelUrl(`https://awaismaz.pythonanywhere.com${data.stored_path}`);
-      setIsGenerating(false);
-  
-      toast({
-        title: "Model Generated",
-        description: "Your 3D model has been successfully created!",
-        variant: "default",
-      });
-  
-      console.log("Generated Model Details:", data);
-  
+      // Trigger the model generation and get the task ID
+      const data = await generateModel(prompt, style, complexity, optimizePrinting);
+      const taskId = data.task_id;  // Get task ID from response
+
+      // Polling loop for task status
+      const pollTaskStatus = async () => {
+        try {
+          // Poll the task status using the task ID
+          const statusData = await checkTaskStatus(taskId, prompt, style, complexity, optimizePrinting);
+
+          // Check the status of the task
+          const status = statusData.status;
+
+          if (status === 'completed') {
+            // Task succeeded, show the model output and stop polling
+            // Extract model path and create the full URL
+            const modelPath = statusData.stored_path; // This is the model path from the response
+            console.log("Model Path:", modelPath);
+            const modelFileUrl = `${baseURL}/media/${modelPath}`; // Assuming `baseURL` is the base URL for your server
+
+            // Extracting additional fields like preview image URL, color video, gaussian ply, if available
+            const previewImageUrl = statusData.preview_image_url;
+            const colorVideo = statusData.color_video;
+            const gaussianPly = statusData.gaussian_ply;
+
+            // Update the generated model URL with the model path
+            setGeneratedModelUrl(modelFileUrl);
+
+            // Log or store other URLs (preview image, color video, gaussian ply) if needed
+            console.log("Preview Image URL:", previewImageUrl);
+            console.log("Color Video URL:", colorVideo);
+            console.log("Gaussian PLY URL:", gaussianPly);
+
+            // Show a success toast message
+            toast({
+              title: "Success",
+              description: "Model generation completed successfully!",
+              // variant: "success",  // Use variant: "success" for success styling
+            });
+
+            // Stop the generating state
+            setIsGenerating(false);
+          } else if (status === 'failed') {
+            // Task failed, show an error and stop polling
+            toast({
+              title: "Error",
+              description: "Model generation failed. Please try again.",
+              variant: "destructive",
+            });
+
+            // Stop the generating state
+            setIsGenerating(false);
+          } else if (status === 'starting' || status === 'processing') {
+            // Task is still processing, continue polling
+            setTimeout(pollTaskStatus, 10000); // Wait for 10 seconds before polling again
+          } else {
+            // Unexpected status
+            toast({
+              title: "Error",
+              description: "Unexpected task status. Please try again.",
+              variant: "destructive",
+            });
+            setIsGenerating(false);
+          }
+        } catch (error) {
+          console.error("Error checking task status:", error);
+          setIsGenerating(false);
+          toast({
+            title: "Error",
+            description: "Failed to check task status. Please try again.",
+            variant: "destructive",
+          });
+        }
+      };
+
+
+
+      // Start polling the task status
+      pollTaskStatus();
+
     } catch (error) {
-      console.error('Error generating model:', error);
+      console.error("Error generating model:", error);
       setIsGenerating(false);
       toast({
         title: "Error",
@@ -88,7 +152,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
       });
     }
   };
-  
+
 
   return (
     <div className="py-12 relative overflow-hidden">
@@ -102,32 +166,32 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
             Describe what you want to create, and our AI will generate a 3D model for you to refine and customize.
           </p>
         </div>
-        
+
         <div className="flex flex-col lg:flex-row items-start gap-12">
           <div className="lg:w-1/2">
             <div className="bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
               <h2 className="font-cinzel text-2xl font-bold mb-4 text-[--gold-default]">Create Your Model</h2>
-              
+
               {/* Generation form */}
               <form className="mb-6" onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
                 <div className="mb-6">
                   <label htmlFor="prompt" className="block mb-2 text-sm font-medium text-gray-200">Your Description</label>
-                  <textarea 
-                    id="prompt" 
-                    rows={5} 
-                    className="w-full p-3 bg-[--navy-default] border border-[--royal-default] rounded-md focus:outline-none focus:ring-2 focus:ring-[--gold-default]/50 text-white" 
+                  <textarea
+                    id="prompt"
+                    rows={5}
+                    className="w-full p-3 bg-[--navy-default] border border-[--royal-default] rounded-md focus:outline-none focus:ring-2 focus:ring-[--gold-default]/50 text-white"
                     placeholder="Describe your model in detail. For example: A medieval castle with tall towers, stone walls, a moat with a drawbridge, and small windows for archers. Include defensive walls and battlements."
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     disabled={isGenerating}
                   ></textarea>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
                     <label htmlFor="style" className="block mb-2 text-sm font-medium text-gray-200">Style</label>
-                    <select 
-                      id="style" 
+                    <select
+                      id="style"
                       className="w-full p-3 bg-[--navy-default] border border-[--royal-default] rounded-md focus:outline-none focus:ring-2 focus:ring-[--gold-default]/50 text-white"
                       value={style}
                       onChange={(e) => setStyle(e.target.value)}
@@ -143,7 +207,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                     </select>
                     <p className="mt-1 text-xs text-gray-400">Select a style that matches your vision for the model</p>
                   </div>
-                  
+
                   {/* <div>
                     <label htmlFor="complexity" className="block mb-2 text-sm font-medium text-gray-200">Complexity</label>
                     <select 
@@ -161,12 +225,12 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                     <p className="mt-1 text-xs text-gray-400">Higher complexity means more detailed models but longer generation time</p>
                   </div> */}
                 </div>
-                
+
                 <div className="mb-8 bg-[--navy-default] p-4 rounded-md border border-[--royal-default]/50">
                   <div className="flex items-center mb-3">
-                    <input 
-                      type="checkbox" 
-                      id="optimize-printing" 
+                    <input
+                      type="checkbox"
+                      id="optimize-printing"
                       className="mr-2 accent-[--gold-default] w-4 h-4"
                       checked={optimizePrinting}
                       onChange={(e) => setOptimizePrinting(e.target.checked)}
@@ -179,7 +243,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                     and is suitable for slicing and printing on standard 3D printers.
                   </p>
                 </div>
-                
+
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-sm text-gray-400 flex items-center">
                     <i className="ri-coins-line text-[--gold-default] mr-2"></i>
@@ -188,7 +252,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                       <a>Upgrade for unlimited</a>
                     </Link>
                   </div>
-                  <ShieldButton 
+                  <ShieldButton
                     type="submit"
                     disabled={isGenerating || !prompt.trim()}
                     size="lg"
@@ -197,14 +261,14 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                     {isGenerating ? (
                       <>
                         {/* <span className="mr-2 inline-block w-4 h-4 border-2 border-[--navy-default] border-t-transparent rounded-full animate-spin"></span> */}
-                        
+
                         Generating 3D Model
                       </>
                     ) : 'Generate 3D Model'}
                   </ShieldButton>
                 </div>
               </form>
-              
+
               <div className="border-t border-[--royal-default]/50 pt-4 mt-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-cinzel text-lg font-bold text-[--gold-default]">Generation Tips</h3>
@@ -228,11 +292,11 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                 </ul>
               </div>
             </div>
-            
+
             {/* Previous generations */}
             <div className="mt-8 bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
               <h2 className="font-cinzel text-xl font-bold mb-4 text-[--gold-default]">Your Recent Generations</h2>
-              
+
               {loadingGenerations ? (
                 <div className="flex justify-center py-8">
                   <div className="w-8 h-8 border-2 border-[--gold-default] border-t-transparent rounded-full animate-spin"></div>
@@ -250,11 +314,11 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                           completed
                         </span>
                       </div>
-                        <div className="mt-2 flex justify-end">
-                          <Link href={`/model/${gen.id}`}>
-                            <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
-                          </Link>
-                        </div>
+                      <div className="mt-2 flex justify-end">
+                        <Link href={`/model/${gen.id}`}>
+                          <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -269,7 +333,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
               )}
             </div>
           </div>
-          
+
           <div className="lg:w-1/2 sticky top-24">
             {/* 3D viewer for generated model */}
             <div className="aspect-square sm:aspect-auto lg:aspect-auto lg:h-[600px] bg-[--navy-dark] rounded-lg overflow-hidden relative grid-pattern gold-border">
@@ -278,7 +342,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                 className="h-full"
                 isPage={true}
               />
-              
+
               {!isGenerating && !generatedModelUrl && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 bg-[--navy-dark]/70">
                   <div className="text-center max-w-md px-4">
@@ -292,7 +356,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                   </div>
                 </div>
               )}
-              
+
               {isGenerating && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[--navy-dark]/80">
                   <div className="w-24 h-24 border-4 border-[--gold-default]/20 border-t-[--gold-default] rounded-full animate-spin mb-6"></div>
@@ -303,7 +367,7 @@ const { data: userGenerations=[], isLoading:loadingGenerations, isError } = useQ
                 </div>
               )}
             </div>
-            
+
 
           </div>
         </div>

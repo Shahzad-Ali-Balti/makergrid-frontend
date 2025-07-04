@@ -29,6 +29,8 @@ const DashboardPage: React.FC = () => {
     const { user } = useAuth()
     const [page, setPage] = useState(1)
     const pageSize = 4
+    const baseURL = BACKEND_PUBLIC_URL || 'http://localhost:8000'; // Fallback to local URL if not set
+    
 
     const { data: models, isLoading, error } = useQuery({
         queryKey: ['mock-models'],
@@ -126,7 +128,7 @@ const DashboardPage: React.FC = () => {
                                         >
                                             <div className="bg-[--navy-default] p-4 rounded-md border border-[--gold-default] hover:shadow-lg transition-all min-w-[200px] h-full flex flex-col justify-between">
                                                 <ModelViewerMini
-                                                    modelUrl={`${gen.model_file}`}
+                                                    modelUrl={`${baseURL}${gen.model_file}`}
                                                     className="w-full h-40"
                                                     isPage={true}
                                                 />

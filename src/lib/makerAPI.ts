@@ -17,6 +17,29 @@ export const generateModel = async (
   return response.data;
 };
 
+// Function to check task status
+export const checkTaskStatus = async (taskId: string,prompt: string,
+  style: string,
+  complexity: string,
+  optimizePrinting: boolean) => {
+  const response = await axiosInstance.post(`/api/makers/check-task-status/${taskId}/`, {
+    task_id: taskId,
+    prompt,
+    style,
+    complexity,
+    optimize_printing: optimizePrinting,
+
+  });
+  return response.data;
+};
+
+export const checkImageTaskStatus = async (taskId: string) => {
+  const response = await axiosInstance.post(`/api/makers/check-image-task-status/${taskId}/`, {
+    task_id: taskId
+  });
+  return response.data;
+};
+
 export const generateImageToModel = async (file: File) => {
   const formData = new FormData()
   formData.append("image", file)
