@@ -168,11 +168,9 @@ const ModelGeneratorPage: React.FC = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row items-start gap-12">
-          <div className="lg:w-1/2">
+          <div className="w-full lg:w-1/2 order-1 lg:order-none">
             <div className="bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
               <h2 className="font-cinzel text-2xl font-bold mb-4 text-[--gold-default]">Create Your Model</h2>
-
-              {/* Generation form */}
               <form className="mb-6" onSubmit={(e) => { e.preventDefault(); handleGenerate(); }}>
                 <div className="mb-6">
                   <label htmlFor="prompt" className="block mb-2 text-sm font-medium text-gray-200">Your Description</label>
@@ -207,23 +205,6 @@ const ModelGeneratorPage: React.FC = () => {
                     </select>
                     <p className="mt-1 text-xs text-gray-400">Select a style that matches your vision for the model</p>
                   </div>
-
-                  {/* <div>
-                    <label htmlFor="complexity" className="block mb-2 text-sm font-medium text-gray-200">Complexity</label>
-                    <select 
-                      id="complexity" 
-                      className="w-full p-3 bg-[--navy-default] border border-[--royal-default] rounded-md focus:outline-none focus:ring-2 focus:ring-[--gold-default]/50 text-white"
-                      value={complexity}
-                      onChange={(e) => setComplexity(e.target.value)}
-                      disabled={isGenerating}
-                    >
-                      <option value="simple">Simple</option>
-                      <option value="medium">Medium</option>
-                      <option value="complex">Complex</option>
-                      <option value="very-complex">Very Complex</option>
-                    </select>
-                    <p className="mt-1 text-xs text-gray-400">Higher complexity means more detailed models but longer generation time</p>
-                  </div> */}
                 </div>
 
                 <div className="mb-8 bg-[--navy-default] p-4 rounded-md border border-[--royal-default]/50">
@@ -259,11 +240,7 @@ const ModelGeneratorPage: React.FC = () => {
                     variant="secondary"
                   >
                     {isGenerating ? (
-                      <>
-                        {/* <span className="mr-2 inline-block w-4 h-4 border-2 border-[--navy-default] border-t-transparent rounded-full animate-spin"></span> */}
-
-                        Generating 3D Model
-                      </>
+                      <>Generating 3D Model</>
                     ) : 'Generate 3D Model'}
                   </ShieldButton>
                 </div>
@@ -292,50 +269,9 @@ const ModelGeneratorPage: React.FC = () => {
                 </ul>
               </div>
             </div>
-
-            {/* Previous generations */}
-            <div className="mt-8 bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
-              <h2 className="font-cinzel text-xl font-bold mb-4 text-[--gold-default]">Your Recent Generations</h2>
-
-              {loadingGenerations ? (
-                <div className="flex justify-center py-8">
-                  <div className="w-8 h-8 border-2 border-[--gold-default] border-t-transparent rounded-full animate-spin"></div>
-                </div>
-              ) : userGenerations && userGenerations.length > 0 ? (
-                <div className="space-y-3">
-                  {userGenerations.slice(0, 3).map((gen: any) => (
-                    <div key={gen.id} className="bg-[--navy-default] p-3 rounded-md border border-[--royal-default]/30 hover:border-[--gold-default]/30 transition-colors">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-white line-clamp-1">{gen.prompt?.substring(0, 40) || ""}...</p>
-                          <p className="text-xs text-gray-400 mt-1">Style: {gen.style} • Complexity: {gen.complexity}</p>
-                        </div>
-                        <span className={`text-xs px-2 py-1 rounded-full bg-green-700/80 text-white`}>
-                          completed
-                        </span>
-                      </div>
-                      <div className="mt-2 flex justify-end">
-                        <Link href={`/model/${gen.id}`}>
-                          <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <div className="w-16 h-16 rounded-full bg-[--royal-default]/50 mx-auto flex items-center justify-center mb-3">
-                    <i className="ri-history-line text-2xl text-[--gold-default]/70"></i>
-                  </div>
-                  <p className="text-gray-300">You haven't generated any models yet.</p>
-                  <p className="text-sm text-gray-400 mt-1">Your generations will appear here.</p>
-                </div>
-              )}
-            </div>
           </div>
 
-          <div className="lg:w-1/2 sticky top-24">
-            {/* 3D viewer for generated model */}
+          <div className="w-full lg:w-1/2 order-2 lg:order-none lg:sticky lg:top-24">
             <div className="aspect-square sm:aspect-auto lg:aspect-auto lg:h-[600px] bg-[--navy-dark] rounded-lg overflow-hidden relative grid-pattern gold-border">
               <ModelViewer
                 modelUrl={generatedModelUrl || undefined}
@@ -367,12 +303,50 @@ const ModelGeneratorPage: React.FC = () => {
                 </div>
               )}
             </div>
-
-
           </div>
+        </div>
+
+        <div className="mt-12 bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
+          <h2 className="font-cinzel text-xl font-bold mb-4 text-[--gold-default]">Your Recent Generations</h2>
+
+          {loadingGenerations ? (
+            <div className="flex justify-center py-8">
+              <div className="w-8 h-8 border-2 border-[--gold-default] border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : userGenerations && userGenerations.length > 0 ? (
+            <div className="space-y-3">
+              {userGenerations.slice(0, 3).map((gen: any) => (
+                <div key={gen.id} className="bg-[--navy-default] p-3 rounded-md border border-[--royal-default]/30 hover:border-[--gold-default]/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-white line-clamp-1">{gen.prompt?.substring(0, 40) || ""}...</p>
+                      <p className="text-xs text-gray-400 mt-1">Style: {gen.style} • Complexity: {gen.complexity}</p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-green-700/80 text-white">
+                      completed
+                    </span>
+                  </div>
+                  <div className="mt-2 flex justify-end">
+                    <Link href={`/model/${gen.id}`}>
+                      <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-[--royal-default]/50 mx-auto flex items-center justify-center mb-3">
+                <i className="ri-history-line text-2xl text-[--gold-default]/70"></i>
+              </div>
+              <p className="text-gray-300">You haven't generated any models yet.</p>
+              <p className="text-sm text-gray-400 mt-1">Your generations will appear here.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
+
   );
 };
 

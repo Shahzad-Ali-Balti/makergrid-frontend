@@ -157,88 +157,6 @@ const ImageToModelPage: React.FC = () => {
   };
 
 
-  // const handleGenerate = async () => {
-  //   if (!selectedFile) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Please select an image file.",
-  //       variant: "destructive",
-  //     });
-  //     return;
-  //   }
-
-  //   setIsGenerating(true);
-  //   setGeneratedModelUrl(null);
-
-  //   const formData = new FormData();
-  //   formData.append("image", selectedFile);
-
-  //   try {
-  //     // ✅ Step 1: Start background job
-  //     const res = await axiosInstance.post("/api/makers/image-to-model/", formData, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     });
-
-  //     const { task_id } = res.data;
-  //     console.log("Task ID:", task_id);
-
-  //     // ✅ Step 2: Poll for task status
-  //     const pollStatus = async () => {
-  //       let attempts = 0;
-  //       const maxAttempts = 60; // e.g., 5 mins (60 × 5s)
-
-  //       while (attempts < maxAttempts) {
-  //         const statusRes = await axiosInstance.get(`/api/model-job-status/${task_id}/`);
-  //         const statusData = statusRes.data;
-
-  //         if (statusData.status === "SUCCESS") {
-  //           const result = statusData.result;
-  //           setGeneratedModelUrl(result.stored_path);
-  //           setIsGenerating(false);
-  //           toast({
-  //             title: "Model Generated",
-  //             description: "Your 3D model has been successfully created!",
-  //             variant: "default",
-  //           });
-  //           return;
-  //         }
-
-  //         if (statusData.status === "FAILURE") {
-  //           toast({
-  //             title: "Error",
-  //             description: statusData.result?.error || "Failed to generate model.",
-  //             variant: "destructive",
-  //           });
-
-  //           setIsGenerating(false);
-  //           return;
-  //         }
-
-  //         await new Promise((resolve) => setTimeout(resolve, 5000));
-  //         attempts++;
-  //       }
-
-  //       toast({
-  //         title: "Timeout",
-  //         description: "Model generation took too long. Please try again.",
-  //         variant: "destructive",
-  //       });
-  //       setIsGenerating(false);
-  //     };
-
-  //     pollStatus();
-  //   } catch (error) {
-  //     console.error("Error generating model:", error);
-  //     toast({
-  //       title: "Error",
-  //       description: "Failed to generate model. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //     setIsGenerating(false);
-  //   }
-  // };
 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,140 +168,141 @@ const ImageToModelPage: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen text-white px-4 py-6">
-        <header className="text-center mb-8">
+      <div className="py-12 relative overflow-hidden">
+        <div className="absolute inset-0 grid-pattern opacity-10"></div>
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h1 className="font-cinzel-decorative text-4xl font-bold mb-4">
               <span className="text-[--gold-default]">AI-Powered</span> Model Generator
             </h1>
             <p className="max-w-2xl mx-auto text-gray-300">
-              Describe what you want to create, and our AI will generate a 3D model for you to refine and customize.
+              Upload your image and our AI will generate a 3D model for you to refine and customize.
             </p>
           </div>
-        </header>
 
-        <main className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-          <section className="border gold-border rounded-lg p-4 bg-[--navy-light]">
-            <h2 className="font-cinzel text-2xl font-bold mb-4 text-[--gold-default]">Image To Model</h2>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="w-full bg-[--navy-dark] text-[--gold-default] border border-gray-600 p-2 rounded mb-4"
-            />
-            <div className="w-full h-[250px] border border-gray-600 rounded bg-[#1c2d4f] flex items-center justify-center mb-4 overflow-hidden">
-              {previewURL ? (
-                <img
-                  src={previewURL}
-                  alt="Preview"
-                  className="w-full h-full"
+          <div className="flex flex-col lg:flex-row items-start gap-12">
+            <div className="w-full lg:w-1/2 order-1 lg:order-none">
+              <div className="bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
+                <h2 className="font-cinzel text-2xl font-bold mb-4 text-[--gold-default]">Image To Model</h2>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full bg-[--navy-dark] text-[--gold-default] border border-gray-600 p-2 rounded mb-4"
                 />
-              ) : (
-                <img
-                  src={promptImagePlaceholder}
-                  alt="Placeholder"
-                  className="w-full h-full object-cover"
-                />
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-gray-400 flex items-center">
-                <i className="ri-coins-line text-[--gold-default] mr-2"></i>
-                Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">15/20</span> remaining
-                <Link href="/pricing" className="ml-2 text-[--gold-default] hover:underline">
-                  <a>Upgrade for unlimited</a>
-                </Link>
-              </div>
-              <ShieldButton
-                type="submit"
-                disabled={isGenerating}
-                size="lg"
-                variant="secondary"
-              >
-                {isGenerating ? (
-                  <>
-                    Generating 3D Model
-                  </>
-                ) : <div onClick={handleGenerate}>Generate 3D Model</div>}
-              </ShieldButton>
-            </div>
-          </section>
-
-          <section className="h-[480px] w-full bg-[--navy-dark] rounded-lg overflow-hidden relative grid-pattern gold-border flex items-stretch">
-
-
-
-            {(!isGenerating && !generatedModelUrl) ? (
-              <div className="absolute inset-0 flex items-center justify-center z-10 bg-[--navy-dark]/70">
-                <div className="text-center max-w-md px-4">
-                  <div className="w-20 h-20 mx-auto bg-[--royal-default]/30 rounded-full flex items-center justify-center mb-4 border border-[--gold-default]/20">
-                    <i className="ri-sword-fill text-4xl text-[--gold-default]/70"></i>
-                  </div>
-                  <h3 className="font-cinzel text-xl text-[--gold-default] mb-2">Ready to Forge</h3>
-                  <p className="text-gray-300">
-                    Provide your image and watch as AI transforms your image into a 3D masterpiece.
-                  </p>
+                <div className="w-full h-[250px] border border-gray-600 rounded bg-[#1c2d4f] flex items-center justify-center mb-4 overflow-hidden">
+                  {previewURL ? (
+                    <img
+                      src={previewURL}
+                      alt="Preview"
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <img
+                      src={promptImagePlaceholder}
+                      alt="Placeholder"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
-              </div>
-            ) : (
-              <ModelViewer
-                modelUrl={generatedModelUrl || undefined}
-                className="h-full w-full border "
-                isPage={true}
-              />)}
 
-            {isGenerating && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[--navy-dark]/80">
-                <div className="w-24 h-24 border-4 border-[--gold-default]/20 border-t-[--gold-default] rounded-full animate-spin mb-6"></div>
-                <h3 className="font-cinzel text-xl text-[--gold-default] mb-2">Forging Your Model</h3>
-                <p className="text-center max-w-md px-6 text-gray-300">
-                  Our AI is hard at work creating your 3D model. This may take a few moments depending on complexity.
-                </p>
-              </div>
-            )}
-
-          </section>
-        </main>
-
-        <section className="max-w-6xl mx-auto mt-8 border gold-border rounded-lg p-6 bg-[--navy-light] shield-container">
-          <h2 className="font-cinzel text-xl font-bold mb-4 text-[--gold-default]">Your Recent Generations</h2>
-          {loadingGenerations ? (
-            <div className="flex justify-center py-8">
-              <div className="w-8 h-8 border-2 border-[--gold-default] border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : userGenerations && userGenerations.length > 0 ? (
-            <div className="space-y-3">
-              {userGenerations.slice(0, 3).map((gen: any) => (
-                <div key={gen.id} className="bg-[--navy-default] p-3 rounded-md border border-[--royal-default]/30 hover:border-[--gold-default]/30 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium text-white line-clamp-1">{gen.prompt?.substring(0, 40) || ""}...</p>
-                      <p className="text-xs text-gray-400 mt-1">Style: {gen.style} • Complexity: {gen.complexity}</p>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-full bg-green-700/80 text-white`}>
-                      completed
-                    </span>
-                  </div>
-                  <div className="mt-2 flex justify-end">
-                    <Link href={`/model/${gen.id}`}>
-                      <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="text-sm text-gray-400 flex items-center">
+                    <i className="ri-coins-line text-[--gold-default] mr-2"></i>
+                    Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">15/20</span> remaining
+                    <Link href="/pricing" className="ml-2 text-[--gold-default] hover:underline">
+                      <a>Upgrade for unlimited</a>
                     </Link>
                   </div>
+                  <ShieldButton
+                    type="submit"
+                    disabled={isGenerating}
+                    size="lg"
+                    variant="secondary"
+                  >
+                    {isGenerating ? (
+                      <>Generating 3D Model</>
+                    ) : <div onClick={handleGenerate}>Generate 3D Model</div>}
+                  </ShieldButton>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="py-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[--royal-default]/50 mx-auto flex items-center justify-center mb-3">
-                <i className="ri-history-line text-2xl text-[--gold-default]/70"></i>
               </div>
-              <p className="text-gray-300">You haven't generated any models yet.</p>
-              <p className="text-sm text-gray-400 mt-1">Your generations will appear here.</p>
             </div>
-          )}
-        </section>
+
+            <div className="w-full lg:w-1/2 order-2 lg:order-none lg:sticky lg:top-24">
+              <div className="h-[480px] w-full bg-[--navy-dark] rounded-lg overflow-hidden relative grid-pattern gold-border flex items-stretch">
+                {(!isGenerating && !generatedModelUrl) ? (
+                  <div className="absolute inset-0 flex items-center justify-center z-10 bg-[--navy-dark]/70">
+                    <div className="text-center max-w-md px-4">
+                      <div className="w-20 h-20 mx-auto bg-[--royal-default]/30 rounded-full flex items-center justify-center mb-4 border border-[--gold-default]/20">
+                        <i className="ri-sword-fill text-4xl text-[--gold-default]/70"></i>
+                      </div>
+                      <h3 className="font-cinzel text-xl text-[--gold-default] mb-2">Ready to Forge</h3>
+                      <p className="text-gray-300">
+                        Provide your image and watch as AI transforms your image into a 3D masterpiece.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <ModelViewer
+                    modelUrl={generatedModelUrl || undefined}
+                    className="h-full w-full border"
+                    isPage={true}
+                  />
+                )}
+
+                {isGenerating && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-[--navy-dark]/80">
+                    <div className="w-24 h-24 border-4 border-[--gold-default]/20 border-t-[--gold-default] rounded-full animate-spin mb-6"></div>
+                    <h3 className="font-cinzel text-xl text-[--gold-default] mb-2">Forging Your Model</h3>
+                    <p className="text-center max-w-md px-6 text-gray-300">
+                      Our AI is hard at work creating your 3D model. This may take a few moments depending on complexity.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 bg-[--navy-light] p-6 rounded-lg gold-border shield-container">
+            <h2 className="font-cinzel text-xl font-bold mb-4 text-[--gold-default]">Your Recent Generations</h2>
+            {loadingGenerations ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-2 border-[--gold-default] border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : userGenerations && userGenerations.length > 0 ? (
+              <div className="space-y-3">
+                {userGenerations.slice(0, 3).map((gen: any) => (
+                  <div key={gen.id} className="bg-[--navy-default] p-3 rounded-md border border-[--royal-default]/30 hover:border-[--gold-default]/30 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="font-medium text-white line-clamp-1">{gen.prompt?.substring(0, 40) || ""}...</p>
+                        <p className="text-xs text-gray-400 mt-1">Style: {gen.style} • Complexity: {gen.complexity}</p>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-green-700/80 text-white">
+                        completed
+                      </span>
+                    </div>
+                    <div className="mt-2 flex justify-end">
+                      <Link href={`/model/${gen.id}`}>
+                        <ShieldButton variant="secondary" size="sm">View Model</ShieldButton>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-[--royal-default]/50 mx-auto flex items-center justify-center mb-3">
+                  <i className="ri-history-line text-2xl text-[--gold-default]/70"></i>
+                </div>
+                <p className="text-gray-300">You haven't generated any models yet.</p>
+                <p className="text-sm text-gray-400 mt-1">Your generations will appear here.</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
     </>
   );
 };
