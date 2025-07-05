@@ -32,11 +32,11 @@ const DashboardPage: React.FC = () => {
     const baseURL = BACKEND_PUBLIC_URL || 'http://localhost:8000'; // Fallback to local URL if not set
     
 
-    const { data: models, isLoading, error } = useQuery({
-        queryKey: ['mock-models'],
-        queryFn: getMockModels,
-        staleTime: 60000,
-    })
+    // const { data: models, isLoading, error } = useQuery({
+    //     queryKey: ['mock-models'],
+    //     queryFn: getMockModels,
+    //     staleTime: 60000,
+    // })
 
     const { data: userGenerations = [], isLoading: loadingGenerations, isError } = useQuery({
         queryKey: ['assets', page, pageSize],
