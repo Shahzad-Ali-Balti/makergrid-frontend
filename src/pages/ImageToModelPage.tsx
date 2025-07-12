@@ -14,6 +14,7 @@ import { BACKEND_PUBLIC_URL } from '@/lib/mock/env';
 import { getMockGen } from '@/lib/mock/MockGen';
 import { fetchAssets } from "@/utils/apiCalls/fetchassets"
 import axiosInstance from '@/lib/axiosInstance'; // your axios instance
+import { useAuth } from "@/hooks/use-auth";
 
 // import promptImagePlaceholder from "../public/assets/placeholder 1.png"
 import { Input } from "@/components/ui/input"
@@ -23,6 +24,8 @@ import { Button } from "@/components/ui/button"
 
 const ImageToModelPage: React.FC = () => {
   const { toast } = useToast();
+  const { creditsCount ,credits,totalCredits } = useAuth();
+  
 
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
@@ -92,7 +95,7 @@ const ImageToModelPage: React.FC = () => {
 
             // Update the generated model URL with the model path
             setGeneratedModelUrl(modelFileUrl);
-
+            creditsCount()
             // Log or store other URLs (preview image, color video, gaussian ply) if needed
             console.log("Preview Image URL:", previewImageUrl);
             console.log("Color Video URL:", colorVideo);
@@ -209,7 +212,7 @@ const ImageToModelPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-sm text-gray-400 flex items-center">
                     <i className="ri-coins-line text-[--gold-default] mr-2"></i>
-                    Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">15/20</span> remaining
+                    Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">{credits}/{totalCredits}</span> remaining
                     <Link href="/pricing" className="ml-2 text-[--gold-default] hover:underline">
                       <a>Upgrade for unlimited</a>
                     </Link>

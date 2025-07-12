@@ -1,10 +1,12 @@
 import { useSubscription } from "@/hooks/subscription-user";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/use-auth";
 
 const BillingPage: React.FC = () => {
   const { isFree, isMaker, isArtisan } = useSubscription();
   const [price, setPrice] = useState<string>("0.00");
   const [planLabel, setPlanLabel] = useState<string>("Free");
+  // const[subscription_type]=useAuth()
 
   useEffect(() => {
     if (isMaker) {

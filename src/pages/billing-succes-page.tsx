@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {Loader2} from "lucide-react"
 const BillingSuccessPage:React.FC = () => {
   const [location, navigate] = useLocation();
-  const { refreshUser } = useAuth();
+  const { refreshUser,creditsCount } = useAuth();
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -18,6 +18,7 @@ const BillingSuccessPage:React.FC = () => {
         .get(`/api/accounts/stripe/validate-session/${sessionId}/`)
         .then(() => {
           refreshUser();
+          creditsCount()
           navigate("/dashboard");
         })
         .catch((err) => {
@@ -30,7 +31,7 @@ const BillingSuccessPage:React.FC = () => {
   return (
     <div className="flex items-center justify-center h-screen text-white">
     <Loader2 className="h-8 w-8 animate-spin" />
-      Finalizing your subscription...
+      Finalizing your subscription, please wait...
     </div>
   );
 };

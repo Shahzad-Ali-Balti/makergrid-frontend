@@ -9,6 +9,7 @@ import ModelViewerPage from "@/pages/ModelViewerPage";
 import ProfilePage from "@/pages/ProfilePage";
 import MarketplacePage from "@/pages/MarketplacePage";
 import PricingPage from "@/pages/PricingPage";
+import PricingPage1 from "@/pages/pricingPage1";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MobileMenu from "@/components/layout/MobileMenu";
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/pricing" component={PricingPage} />
+      <Route path="/pricing1" component={PricingPage1} />
       <Route path="/community" component={MarketplacePage} />
       <Route path="/profile/:username" component={ProfilePage} />
       <Route path="/account/profile/:username" component={ProfilePageSelf} />

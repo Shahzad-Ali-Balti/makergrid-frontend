@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import ShieldButton from '../ShieldButton';
 const ModelEditorPreview: React.FC = () => {
   const [brushSize, setBrushSize] = useState(45);
   const [hardness, setHardness] = useState(75);
@@ -18,7 +18,12 @@ const ModelEditorPreview: React.FC = () => {
 
   return (
     <section className="py-16 relative">
-      <div className="absolute inset-0 grid-pattern opacity-10"></div>
+      <div className="absolute inset-0 grid-pattern opacity-100">
+        <div className='flex justify-center items-center py-4'>
+        <ShieldButton fullWidth>Coming Soon</ShieldButton>
+
+        </div>
+      </div>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="font-cinzel text-3xl md:text-4xl font-bold mb-4">

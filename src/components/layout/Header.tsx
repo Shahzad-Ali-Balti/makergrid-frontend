@@ -40,8 +40,9 @@ type ListItemProps = {
 
 const Header: React.FC<HeaderProps> = ({ onMenuOpen }) => {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout,credits } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  // const {creditsCount} = useAuth();
 
   const ListItem = ({ title, href, icon: Icon, iconClassName }: ListItemProps) => (
     <li>
@@ -103,6 +104,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuOpen }) => {
           <div className="flex items-center gap-3">
             {user ? (
               <>
+              <ShieldButton>{credits} Tokens</ShieldButton> 
                 <Link href="/inbox" className="text-[--gold-default] text-xl"><i className="ri-message-3-line" /></Link>
                 <i className="ri-notification-3-line text-xl text-[--gold-default]" />
                 <DropdownMenu>
@@ -141,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuOpen }) => {
               </>
             ) : (
               <Link href="/register">
-                <ShieldButton variant="secondary">Sign Up - It's Free</ShieldButton>
+                <ShieldButton variant="secondary">Sign Up</ShieldButton>
               </Link>
             )}
           </div>

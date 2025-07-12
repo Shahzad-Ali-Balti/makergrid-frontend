@@ -11,24 +11,37 @@ import { Generation } from '@/types/GenerationType';
 import { BACKEND_PUBLIC_URL } from '@/lib/mock/env';
 import { getMockGen } from '@/lib/mock/MockGen';
 import { fetchAssets } from "@/utils/apiCalls/fetchassets"
-
+import { useAuth } from "@/hooks/use-auth";
 
 
 const ModelGeneratorPage: React.FC = () => {
   const { toast } = useToast();
+  const { creditsCount ,credits,totalCredits } = useAuth();
+  
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('realistic');
   const [complexity, setComplexity] = useState('Very Complex');
   const [optimizePrinting, setOptimizePrinting] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const[upgradedPlan,setUpgradedPlan] = useState(false)
   const [generatedModelUrl, setGeneratedModelUrl] = useState<string | null>(null);
   const baseURL = BACKEND_PUBLIC_URL || 'http://localhost:8000'; // Fallback to local URL if not set
-
+  // const [totalCredits, setTotalCredits] = useState<string | number>('0'); // State to hold total credits
 
   const page = 1; // First page
   const pageSize = 10; // Default page size
 
+  // if (credits === "Unlimited") {
+  //   setTotalCredits("unlimited")
+  // }else {
+  //   setTotalCredits('500')
+  //  } // Convert
 
+  useEffect(()=>{
+    if (totalCredits === 'Unlimited'){
+      setUpgradedPlan(true)
+    }
+  })
   const { data: userGenerations = [], isLoading: loadingGenerations, isError } = useQuery({
     queryKey: ['assets', page, pageSize, generatedModelUrl],
     queryFn: () => fetchAssets(page, pageSize),
@@ -91,10 +104,12 @@ const ModelGeneratorPage: React.FC = () => {
             setGeneratedModelUrl(modelFileUrl);
 
             // Log or store other URLs (preview image, color video, gaussian ply) if needed
-            console.log("Preview Image URL:", previewImageUrl);
-            console.log("Color Video URL:", colorVideo);
-            console.log("Gaussian PLY URL:", gaussianPly);
+            // console.log("Preview Image URL:", previewImageUrl);
+            // console.log("Color Video URL:", colorVideo);
+            // console.log("Gaussian PLY URL:", gaussianPly);
 
+
+            creditsCount()
             // Show a success toast message
             toast({
               title: "Success",
@@ -228,10 +243,13 @@ const ModelGeneratorPage: React.FC = () => {
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-sm text-gray-400 flex items-center">
                     <i className="ri-coins-line text-[--gold-default] mr-2"></i>
-                    Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">15/20</span> remaining
-                    <Link href="/pricing" className="ml-2 text-[--gold-default] hover:underline">
+                    Generation credits: <span className="font-bold ml-1 mr-1 text-[--gold-default]">{credits}/{totalCredits}</span> remaining
+                    {!upgradedPlan && (
+                      <Link href="/pricing" className="ml-2 text-[--gold-default] hover:underline">
                       <a>Upgrade for unlimited</a>
                     </Link>
+                    )}
+                    
                   </div>
                   <ShieldButton
                     type="submit"

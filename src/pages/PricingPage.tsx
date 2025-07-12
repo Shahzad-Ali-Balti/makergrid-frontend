@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/use-auth';
 import axiosInstance from '@/lib/axiosInstance';
 import { Loader2 } from "lucide-react"
 import { useSubscription } from "@/hooks/subscription-user"
+import { useToast } from '@/hooks/use-toast';
 
 const planFeatures = {
   free: [
@@ -59,17 +60,56 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 const PlanCard: React.FC<{
   title: string;
-  price: string;
+  // price: string;
   description: string;
   buttonText: string;
   recommended?: boolean;
   planType: 'free' | 'maker' | 'artisan';
-}> = ({ title, price, description, buttonText, recommended = false, planType }) => {
+  billingCycle?: 'monthly' | 'annually';
+}> = ({ title, description, buttonText, recommended = false, planType, billingCycle }) => {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
+  const { toast } = useToast();
+
+
+  useEffect(() => {
+    console.log("Billing Cycle:", billingCycle); // <--- add this
+  }, [billingCycle]);
+
+
+  const prices = {
+    maker: billingCycle === 'monthly' ? '$19.99' : '$191.90',
+    artisan: billingCycle === 'monthly' ? '$49.99' : '$479.90',
+    free: 'Free',
+  };
+
+  const displayPrice = prices[planType];
+
+
   const handleSubscribe = async () => {
+
     setLoading(true);
+
+    if (!user) {
+      setLoading(true);
+      // Show the toast message
+      toast({
+        title: "Success",
+        description: "Please Login First to buy the subscription plans.Rendering to login page now...",
+        // variant: "destructive",
+      });
+
+      // Wait for 3 seconds before redirecting to the login page
+      setTimeout(() => {
+        window.location.href = '/login'; // Redirect to login page after 3 seconds
+      }, 3000); // 3000 milliseconds = 3 seconds
+
+      return
+    }
+
+
+
     try {
       const res = await axiosInstance.post("/api/accounts/stripe/create-checkout-session/", {
         plan: planType,
@@ -103,8 +143,15 @@ const PlanCard: React.FC<{
       <div className={`p-6 ${recommended ? 'pt-10' : ''}`}>
         <h3 className="font-cinzel text-2xl font-bold mb-2 text-[--gold-default]">{title}</h3>
         <div className="mb-2">
-          <span className="text-3xl font-bold text-white">{price}</span>
-          {price !== 'Free' && <span className="text-gray-400 ml-1">/month</span>}
+          {/* <span className="text-3xl font-bold text-white">{price}</span>
+          {price !== 'Free' && <span className="text-gray-400 ml-1">/month</span>} */}
+          <span className="text-3xl font-bold text-white">{displayPrice}</span>
+          {planType !== 'free' && (
+            <span className="text-gray-400 ml-1">
+              {billingCycle === 'monthly' ? '/month' : '/year'}
+            </span>
+          )}
+
         </div>
         <p className="text-gray-300 mb-6">{description}</p>
 
@@ -188,12 +235,14 @@ const PricingPage: React.FC = () => {
 
           <div className="mt-8 inline-flex p-1 bg-[--navy-default] rounded-full border border-[--royal-default]/50">
             <button
+              type='button'
               className={`px-6 py-2 rounded-full font-cinzel text-sm ${billingCycle === 'monthly' ? 'bg-[--royal-default] text-[--gold-default]' : 'text-gray-300 hover:text-white'}`}
               onClick={() => setBillingCycle('monthly')}
             >
               Monthly
             </button>
             <button
+              type='button'
               className={`px-6 py-2 rounded-full font-cinzel text-sm ${billingCycle === 'annually' ? 'bg-[--royal-default] text-[--gold-default]' : 'text-gray-300 hover:text-white'}`}
               onClick={() => setBillingCycle('annually')}
             >
@@ -202,30 +251,37 @@ const PricingPage: React.FC = () => {
           </div>
         </div>
 
+        <h1 className="text-white text-2xl">
+          Current: {billingCycle.toUpperCase()}
+        </h1>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <PlanCard
             title="Free"
-            price="Free"
+            // price="Free"
             description="Perfect for hobbyists and beginners exploring the world of 3D creation."
             buttonText="Free Plan"
             planType="free"
+            billingCycle={billingCycle}
           />
 
           <PlanCard
             title="Maker"
-            price={billingCycle === 'monthly' ? '$19.99' : '$191.90'}
+            // price={billingCycle === 'monthly' ? '$19.99' : '$191.90'}
             description="Designed for active creators who want more capabilities and customization."
             buttonText="Join Maker Plan"
             recommended={true}
             planType="maker"
+            billingCycle={billingCycle}
           />
 
           <PlanCard
             title="Artisan"
-            price={billingCycle === 'monthly' ? '$49.99' : '$479.90'}
+            // price={billingCycle === 'monthly' ? '$49.99' : '$479.90'}
             description="For professional 3D artists and studios requiring unlimited access and priority features."
             buttonText="Join Artisan Plan"
             planType="artisan"
+            billingCycle={billingCycle}
           />
         </div>
 
